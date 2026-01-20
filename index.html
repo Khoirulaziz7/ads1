@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monetag Ad Integration</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .ad-box {
+            background: #f8f9ff;
+            border: 2px dashed #4361ee;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            margin: 25px 0;
+        }
+        .btn {
+            background: #4361ee;
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+        }
+        .btn:hover:not(:disabled) {
+            background: #3a56d4;
+            transform: translateY(-2px);
+        }
+        .btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 500;
+            text-align: center;
+        }
+        .status.loading { background: #e3f2fd; color: #1976d2; }
+        .status.success { background: #e8f5e9; color: #2e7d32; }
+        .status.error { background: #ffebee; color: #c62828; }
+        .status.warning { background: #fff8e1; color: #5d4037; }
+        .note {
+            background: #fff8e1;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 25px;
+            font-size: 14px;
+            color: #5d4037;
+        }
+        .steps {
+            text-align: left;
+            margin: 20px 0;
+            padding-left: 20px;
+        }
+        .steps li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Monetag Ad Integration</h1>
+        
+        <div class="ad-box">
+            <h3>Interstitial Ad (Zone ID: 10493741)</h3>
+            <button class="btn" id="showAdBtn" disabled>Tampilkan Iklan</button>
+            <div class="status" id="status">Menunggu SDK dimuat...</div>
+        </div>
+
+        <div class="note">
+            <strong>⚠️ Persyaratan Wajib:</strong>
+            <ol class="steps">
+                <li>Domain harus terdaftar di dashboard Monetag</li>
+                <li>Jangan jalankan file HTML langsung (gunakan http://)</li>
+                <li>Gunakan koneksi internet yang stabil</li>
+                <li>Jangan blokir script dari libtl.com</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- Monetag SDK - Ditempatkan di akhir body -->
+    <script src="//libtl.com/sdk.js" 
+            data-zone="10493741" 
+            data-sdk="show_10493741"
+            async>
+    </script>
+
+    <script>
+        // Elemen UI
+        const showAdBtn = document.getElementById('showAdBtn');
+        const statusEl = document.getElementById('status');
+        
+        // Tunggu hingga SDK dimuat
+        function waitForMonetagSDK() {
+            const checkInterval = setInterval(() => {
+                // Periksa apakah fungsi sudah tersedia
+                if (typeof window.show_10493741 === 'function') {
+                    clearInterval(checkInterval);
+                    statusEl.className = 'status success';
+                    statusEl.textContent = '✅ SDK Monetag berhasil dimuat!';
+                    showAdBtn.disabled = false;
+                    
+                    console.log('Monetag SDK ready!');
+                }
+            }, 500); // Periksa setiap 500ms
+            
+            // Timeout jika SDK gagal dimuat dalam 10 detik
+            setTimeout(() => {
+                if (showAdBtn.disabled) {
+                    clearInterval(checkInterval);
+                    statusEl.className = 'status error';
+                    statusEl.textContent = '❌ Gagal memuat SDK Monetag';
+                    showAdBtn.textContent = 'Coba Lagi';
+                    showAdBtn.disabled = false;
+                    showAdBtn.onclick = () => location.reload();
+                }
+            }, 10000);
+        }
+
+        // Fungsi menampilkan iklan
+        function showAd() {
+            if (typeof window.show_10493741 !== 'function') {
+                statusEl.className = 'status error';
+                statusEl.textContent = '❌ SDK belum siap. Refresh halaman.';
+                return;
+            }
+            
+            statusEl.className = 'status loading';
+            statusEl.textContent = 'Memuat iklan...';
+            showAdBtn.disabled = true;
+            
+            // Tampilkan iklan
+            window.show_10493741()
+                .then(() => {
+                    statusEl.className = 'status success';
+                    statusEl.textContent = '✅ Iklan selesai! Reward diberikan.';
+                    showAdBtn.disabled = false;
+                })
+                .catch((error) => {
+                    console.error('Monetag Error:', error);
+                    statusEl.className = 'status error';
+                    statusEl.textContent = '❌ Gagal menampilkan iklan';
+                    showAdBtn.disabled = false;
+                });
+        }
+
+        // Event listener
+        showAdBtn.addEventListener('click', showAd);
+        
+        // Mulai proses pemeriksaan SDK
+        waitForMonetagSDK();
+    </script>
+</body>
+</html>
+
